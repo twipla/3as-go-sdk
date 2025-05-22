@@ -18,7 +18,55 @@ go get github.com/twipla/3as-go-sdk
 
 ## How to use the library
 
-Please refer to the example on [pkg.go.dev](https://pkg.go.dev/github.com/twipla/3as-go-sdk)
+Please refer to the example on [pkg.go.dev](https://pkg.go.dev/github.com/twipla/3as-go-sdk).
+
+For example, here is how you can generate a dashboard URL to embed in an iframe (or redirect the customer):
+
+```go
+package main
+
+import (
+	_ "embed"
+	"fmt"
+	twipla3as "github.com/twipla/3as-go-sdk"
+	"log"
+)
+
+// Suppose that the RSA private key you use for signing is stored in jwtRS256.key
+//
+//go:embed jwtRS256.key
+var privateKey string
+
+const (
+	// intpID is the integration provider UUID received.
+	intpID = "2f8b7fd2-f958-4c10-b9d7-6aa0213ae299"
+	// intpcID is your internal customer identifier
+	intpcID = "first_test_01"
+	// websiteID is your website identifier associated with the customer with intpcID
+	websiteID = "first_test_01_website_01"
+)
+
+func main() {
+	// Create a new SDK instance.
+	sdk, err := twipla3as.NewSDK(&twipla3as.TwiplaConfig{
+		IntpID:      intpID,
+		PrivateKey:  privateKey,
+		Environment: twipla3as.EnvironmentProduction,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Generate the dashboard URL for your specific (intpc, website) pair.
+	url, err := sdk.GenerateIframeURL(intpcID, websiteID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(url)
+}
+```
+
 
 ## Creating an RSA Key pair
 
