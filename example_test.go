@@ -1,3 +1,5 @@
+//go:build ignore
+
 package twipla3as_test
 
 import (
@@ -8,7 +10,7 @@ import (
 	"testing"
 )
 
-//go:embed jwtRS256_intpc.key
+//go:embed jwtRS256.key
 var privateKey string
 
 func ExampleTwiplaSDK_GenerateIframeURL() {

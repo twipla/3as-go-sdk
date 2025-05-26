@@ -1,6 +1,7 @@
 package twipla3as
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 
@@ -13,6 +14,12 @@ const (
 	EnvironmentDevelop    Environment = "dev"
 	EnvironmentStage      Environment = "stage"
 	EnvironmentProduction Environment = "production"
+)
+
+var (
+	ErrNoPrivateKey            = errors.New("no private key provided")
+	ErrInvalidSubscriptionType = errors.New("invalid subscription type")
+	ErrInvalidAccessToken      = errors.New("invalid access token")
 )
 
 type TwiplaConfig struct {
@@ -33,6 +40,9 @@ type TwiplaSDK struct {
 }
 
 func NewSDK(config *TwiplaConfig) (*TwiplaSDK, error) {
+	if config.PrivateKey == "" {
+		return nil, ErrNoPrivateKey
+	}
 
 	pkey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(config.PrivateKey))
 	if err != nil {
