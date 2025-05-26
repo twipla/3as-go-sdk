@@ -56,6 +56,14 @@ func TestINTPCs(t *testing.T) {
 			assert.Equal(t, 15, pagination.PageSize)
 		})
 
+		t.Run("Get one", func(t *testing.T) {
+			intpc, err := intpcSubSDK.INTPC(t.Context(), intpcName)
+			assert.NoError(t, err)
+			assert.NotNil(t, intpc)
+			assert.NotEmpty(t, intpc.ID)
+			assert.Equal(t, intpcName, intpc.IntpCustomerID)
+		})
+
 		t.Run("Delete", func(t *testing.T) {
 			intpc, err := intpcSubSDK.DeleteINTPC(t.Context(), intpcName)
 			assert.NoError(t, err)
@@ -108,6 +116,14 @@ func TestINTPCs(t *testing.T) {
 			assert.NotEmpty(t, intpcs)
 			assert.NotEmpty(t, pagination)
 			assert.Equal(t, 15, pagination.PageSize)
+		})
+
+		t.Run("Get one", func(t *testing.T) {
+			intpc, err := websiteSubSDK.INTPC(t.Context(), intpcName)
+			assert.NoError(t, err)
+			assert.NotNil(t, intpc)
+			assert.NotEmpty(t, intpc.ID)
+			assert.Equal(t, intpcName, intpc.IntpCustomerID)
 		})
 
 		t.Run("Delete", func(t *testing.T) {
