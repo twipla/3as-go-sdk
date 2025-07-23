@@ -330,6 +330,42 @@ err := sdk.RemoveWebsiteWhitelistedDomain(ctx, "INTP_WEBSITE_ID", "google.com")
 domains, err := sdk.WhitelistedDomains(ctx, "INTP_WEBSITE_ID")
 ```
 
+#### Create api key for a website
+
+```go
+key, err := sdk.CreateWebsiteApiKey(ctx, twipla3as.CreateApiKeyArgs{
+    ExternalWebsiteID: "INTP_WEBSITE_ID",
+    Name:              string,          // Name to identify the API key
+    Comment:           *string,         // Optional description or notes
+    ExpiresAt:         *time.Time       // Optional expiration; unlimited if omitted
+})
+
+type ApiKey struct {
+  Id             string     // Unique ID of the API key
+  Name           string    
+  ApiKey         *string    // The actual API key (only returned once — save it immediately!)
+  Comment        string     
+  CreatedAt      time.Time  
+  ExpiresAt      time.Time  
+  IntpWebsiteId  string     
+  IntpCustomerId string     
+}
+
+⚠️ Note: apiKey is only returned at creation time. Make sure to store it securely — it cannot be retrieved again.
+```
+
+#### List all existing api keys for a website
+
+```go
+keys, err := sdk.ListWebsiteApiKeys(ctx, "INTP_WEBSITE_ID")
+```
+
+#### Delete api key
+
+```go
+err := sdk.DeleteWebsiteApiKey(ctx,"INTP_WEBSITE_ID","API_KEY_ID")
+```
+
 ### API for managing a subscription of type `website`
 
 #### Upgrade - immediately applies a higher stp count package to the subscription

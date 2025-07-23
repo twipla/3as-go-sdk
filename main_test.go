@@ -5,9 +5,10 @@ package twipla3as_test
 import (
 	"cmp"
 	_ "embed"
-	twipla3as "github.com/twipla/3as-go-sdk"
 	"log"
 	"testing"
+
+	twipla3as "github.com/twipla/3as-go-sdk"
 )
 
 var (
@@ -25,9 +26,9 @@ var (
 func TestMain(m *testing.M) {
 	var err error
 	intpcSubSDK, err = twipla3as.NewSDK(&twipla3as.TwiplaConfig{
-		IntpID:      "25d96797-3d77-4f4d-bfde-1b41700040ba",
+		IntpID:      "d71ff306-f21e-4124-bf54-9b75148516e5",
 		PrivateKey:  privateKeyIntpc,
-		Environment: twipla3as.EnvironmentStage,
+		Environment: twipla3as.EnvironmentDevelop,
 	})
 	if err != nil {
 		log.Printf("will skip intpc-sub intp tests: %v", err)
@@ -35,9 +36,9 @@ func TestMain(m *testing.M) {
 	}
 
 	websiteSubSDK, err = twipla3as.NewSDK(&twipla3as.TwiplaConfig{
-		IntpID:      "6a2d838c-8853-4a29-9b50-d2a0f120896e",
+		IntpID:      "14257a0c-f436-4ef2-af91-2ee7ca30ff72",
 		PrivateKey:  privateKeyWebsite,
-		Environment: twipla3as.EnvironmentStage,
+		Environment: twipla3as.EnvironmentDevelop,
 	})
 	if err != nil {
 		log.Printf("will skip website-sub intp tests: %v", err)
