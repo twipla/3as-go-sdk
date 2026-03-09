@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -11,17 +12,6 @@ import (
 	"net/url"
 	"strings"
 )
-
-type APIError struct {
-	Status     int    `json:"status"`
-	Message    string `json:"message"`
-	Code       int    `json:"code"`
-	OtherError string `json:"error"`
-}
-
-func (e APIError) Error() string {
-	return fmt.Sprintf("API error: %d %s (Code: %d)", e.Status, e.Message, e.Code)
-}
 
 func (sdk *TwiplaSDK) apiCall(ctx context.Context, method string, path string, body any) (*http.Response, error) {
 	var r *http.Request
@@ -77,14 +67,12 @@ func (sdk *TwiplaSDK) apiCall(ctx context.Context, method string, path string, b
 			}
 			return nil, fmt.Errorf("non-json error response: %q", string(data))
 		}
-		var apiError APIError
-		if err := json.NewDecoder(resp.Body).Decode(&apiError); err != nil {
-			return nil, err
+		jsonBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body:%w", err)
 		}
-		if apiError.OtherError == "invalid access token" {
-			return nil, ErrInvalidAccessToken
-		}
-		return nil, apiError
+
+		return nil, errors.New(string(jsonBody))
 	}
 
 	return resp, nil

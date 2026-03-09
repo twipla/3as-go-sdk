@@ -18,6 +18,32 @@ const (
 	SubscriptionStateInactive  SubscriptionState = "inactive"
 )
 
+type SubscriptionConsumption struct {
+	StpLimit    float64 `json:"stpLimit"`
+	StpConsumed float64 `json:"stpConsumed"`
+
+	StpRateVisit     float64 `json:"stpRateVisit"`
+	StpConsumedVisit float64 `json:"stpConsumedVisit"`
+
+	StpRateVisitEvent     float64 `json:"stpRateVisitEvent"`
+	StpConsumedVisitEvent float64 `json:"stpConsumedVisitEvent"`
+
+	StpRateSessionRecording     float64 `json:"stpRateSessionRecording"`
+	StpConsumedSessionRecording float64 `json:"stpConsumedSessionRecording"`
+
+	StpRateHeatmapIncrement     float64 `json:"stpRateHeatmapIncrement"`
+	StpConsumedHeatmapIncrement float64 `json:"stpConsumedHeatmapIncrement"`
+
+	StpRatePollAnswer     float64 `json:"stpRatePollAnswer"`
+	StpConsumedPollAnswer float64 `json:"stpConsumedPollAnswer"`
+
+	StpRateSurveyAnswer     float64 `json:"stpRateSurveyAnswer"`
+	StpConsumedSurveyAnswer float64 `json:"stpConsumedSurveyAnswer"`
+
+	StpRateFunnelMatch     float64 `json:"stpRateFunnelMatch"`
+	StpConsumedFunnelMatch float64 `json:"stpConsumedFunnelMatch"`
+}
+
 type Website struct {
 	// The ID field is TWIPLA's UUID of the website.
 	ID string `json:"id"`
@@ -52,6 +78,21 @@ type Website struct {
 	ExpiresAt           time.Time `json:"expiresAt"`
 	// StpResetAt is the timestamp at which the website's credit quota is reset.
 	StpResetAt time.Time `json:"stpResetAt"`
+
+	// VisaTrackingCode is the standard tracking code snippet to embed in the website's HTML.
+	VisaTrackingCode string `json:"visaTrackingCode"`
+	// VisaMaxPrivacyModeTrackingCode is the tracking code snippet with max privacy mode enabled.
+	VisaMaxPrivacyModeTrackingCode string `json:"visaMaxPrivacyModeTrackingCode"`
+
+	// PlannedDowngradePackageID is the UUID of the package the website will downgrade to at the end of the current billing interval.
+	PlannedDowngradePackageID string `json:"plannedDowngradePackageId"`
+	// PlannedDowngradePackageName is the name of the package the website will downgrade to at the end of the current billing interval.
+	PlannedDowngradePackageName string `json:"plannedDowngradePackageName"`
+	// PlannedDowngradeBillingInterval is the billing interval that will apply after the planned downgrade.
+	PlannedDowngradeBillingInterval Period `json:"plannedDowngradeBillingInterval"`
+
+	// Consumption holds the monthly credit consumption and per-feature consumption rates.
+	Consumption SubscriptionConsumption `json:"consumption"`
 }
 
 type CreateWebsiteArgs struct {
@@ -75,7 +116,7 @@ type CreateWebsiteArgs struct {
 	UFT bool
 }
 
-func (sdk *TwiplaSDK) CreateWebsite(ctx context.Context, args CreateWebsiteArgs) error {
+func (sdk *TwiplaSDK) CreateWebsite(ctx context.Context, args CreateWebsiteArgs) (*Website, error) {
 	if args.BillingDate.IsZero() {
 		args.BillingDate = time.Now()
 	}
@@ -86,8 +127,11 @@ func (sdk *TwiplaSDK) CreateWebsite(ctx context.Context, args CreateWebsiteArgs)
 	apiArgs.Website.Package.BillingDate = args.BillingDate.UTC().Format(time.RFC3339)
 	apiArgs.Intpc.ID = args.IntpcID
 	apiArgs.Opts.UFT = args.UFT
-	_, err := parseResponse[any](sdk.apiCall(ctx, http.MethodPost, "/v3/3as/websites", apiArgs))
-	return err
+	res, err := parseResponse[Website](sdk.apiCall(ctx, http.MethodPost, "/v3/3as/websites", apiArgs))
+	if err != nil {
+		return nil, err
+	}
+	return &res.Payload, nil
 }
 
 func (sdk *TwiplaSDK) Websites(ctx context.Context, pagination Pagination) ([]Website, PaginationMetadata, error) {

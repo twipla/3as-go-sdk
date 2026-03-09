@@ -1,15 +1,34 @@
 package twipla3as_test
 
 import (
+	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	twipla3as "github.com/twipla/3as-go-sdk"
 	"math/rand/v2"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	twipla3as "github.com/twipla/3as-go-sdk"
 )
 
 func TestINTPCs(t *testing.T) {
+	t.Run("website should be optional", func(t *testing.T) {
+		newIntpc := twipla3as.CreateINTPCArgs{
+			ExternalCustomerID: randIntpcId(),
+			SubscriptionType:   twipla3as.SubscriptionTypeWebsite,
+			Email:              randEmail(),
+		}
+
+		created, err := websiteSubSDK.CreateINTPC(t.Context(), newIntpc)
+		assert.NoError(t, err)
+
+		t.Cleanup(func() {
+			websiteSubSDK.DeleteINTPC(context.Background(), newIntpc.ExternalCustomerID)
+		})
+
+		assert.Equal(t, newIntpc.ExternalCustomerID, created.IntpCustomerID)
+	})
+
 	t.Run("INTPC subscriptions", func(t *testing.T) {
 		if intpcSubSDK == nil {
 			t.Skip("No INTPC Subscription SDK set")
@@ -28,6 +47,7 @@ func TestINTPCs(t *testing.T) {
 		websiteName := fmt.Sprintf("go-sdk-website-%d", rand.Int())
 		rndEmail := fmt.Sprintf("%d@twipla.com", rand.Int())
 		rndDomain := fmt.Sprintf("%d.twiplatest.com", rand.Int())
+
 		t.Run("Create", func(t *testing.T) {
 			intpc, err := intpcSubSDK.CreateINTPC(t.Context(), twipla3as.CreateINTPCArgs{
 				ExternalCustomerID: intpcName,

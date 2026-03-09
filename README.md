@@ -4,6 +4,29 @@
 
 A simple API wrapper for integrating the Analytics as a Service (3AS) APIs provided by TWIPLA.
 
+## Table of Contents
+
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [How to Use the Library](#how-to-use-the-library)
+- [Creating an RSA Key Pair](#creating-an-rsa-key-pair)
+- [Concepts](#concepts)
+  - [Terms](#terms)
+  - [Subscription Types](#subscription-types)
+  - [Example Implementation Flow](#example-implementation-flow)
+- [Available APIs](#available-apis)
+  - [INTPCs API](#intpcs-api)
+  - [INTPC API](#intpc-api)
+  - [Packages API](#packages-api)
+  - [Package API](#package-api)
+  - [Websites API](#websites-api)
+  - [Website API](#website-api)
+  - [Website Contributors API](#website-contributors-api)
+  - [Website Subscription API](#api-for-managing-a-subscription-of-type-website)
+  - [INTPC Subscription API](#api-for-managing-a-subscription-of-type-intpc)
+  - [Utils API](#utils-api)
+- [Dashboard IFrame](#dashboard-iframe)
+
 ## Getting started
 
 1. [Create an RSA Key Pair (PEM format)](#creating-an-rsa-key-pair)
@@ -12,6 +35,7 @@ A simple API wrapper for integrating the Analytics as a Service (3AS) APIs provi
 4. [Use the SDK instance](#how-to-use-the-library) to interact with the API
 
 ## Installation
+
 ```sh
 go get github.com/twipla/3as-go-sdk
 ```
@@ -67,7 +91,6 @@ func main() {
 }
 ```
 
-
 ## Creating an RSA Key pair
 
 1. Create the keypair: `ssh-keygen -t rsa -b 2048 -m PEM -f jwtRS256.key`
@@ -90,10 +113,10 @@ func main() {
   A package has a price and contains a certain number of STPs. They are used when upgrading/downgrading the subscription of a website.
 - **Subscription**\
   A subscription has a package with a certain limit of STPs. This subscription can be upgraded or downgraded. There are two types of subscriptions:
-    - **Website Subscription**\
-      If the INTP is configured with Website Subscriptions, each website has a distinct subscription and their own limits.
-    - **INTPC Subscription**\
-      If the INTP is configured with INTPC Subscriptions, each customer has a subscription and all of their websites pool their consumed STPs together.
+  - **Website Subscription**\
+    If the INTP is configured with Website Subscriptions, each website has a distinct subscription and their own limits.
+  - **INTPC Subscription**\
+    If the INTP is configured with INTPC Subscriptions, each customer has a subscription and all of their websites pool their consumed STPs together.
 
 ### General
 
@@ -123,7 +146,6 @@ There are currently **two types of subscription** available:
 - The `intpc` can **monitor individual usage** per website, providing detailed insights into how each site consumes touchpoints.
 - Ideal for managing multiple websites with a **centralized billing**.
 
-
 ### Example implementation flow
 
 1. Create a new intpc with a website
@@ -133,7 +155,6 @@ There are currently **two types of subscription** available:
 5. Show a modal to the user to upgrade his subscription
 6. Display all the available packages using the SDK
 7. After the payment is complete, use the SDK to upgrade the subscription of the website
-
 
 ## Available APIs
 
@@ -173,6 +194,8 @@ intpc, err := sdk.CreateINTPC(ctx, twipla3as.CreateINTPCArgs{
     SubscriptionType:   twipla3as.SubscriptionTypeINTPC,
     PackageID:          "PACKAGE_UUID"
     BillingDate:        time.Now(), // (optional, defaults to current time)
+
+    ( Leave empty you you want to create the website later )
     ExternalWebsiteID:  "INTP_WEBSITE_ID",
     Domain:             "INTP_WEBSITE_DOMAIN_URI",
 })
@@ -185,6 +208,8 @@ intpc, err := sdk.CreateINTPC(ctx, twipla3as.CreateINTPCArgs{
     ExternalCustomerID: "INTP_CUSTOMER_ID",
     Email:              "INTP_CUSTOMER_EMAIL",
     SubscriptionType:   twipla3as.SubscriptionTypeWebsite,
+
+    ( Leave empty you you want to create the website later )
     PackageID:          "PACKAGE_UUID"
     BillingDate:        time.Now(), // (optional, defaults to current time)
     ExternalWebsiteID:  "INTP_WEBSITE_ID",
@@ -272,7 +297,7 @@ website, err := sdk.Website(ctx, "INTP_WEBSITE_ID")
 #### Create a website with its own subscription and attach it to an existing INTPc
 
 ```go
-err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
+website, err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
     ExternalID: "INTP_WEBSITE_ID",
     IntpcID:    "INTP_CUSTOMER_ID",
     Domain:     "INTP_WEBSITE_DOMAIN",
@@ -281,11 +306,10 @@ err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
 })
 ```
 
-
 #### Create a website and attach it to an existing INTPc subscription. This website, alongside other pre-existing website will consume `touchpoints` from the same pool.
 
 ```go
-err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
+website, err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
     ExternalID: "INTP_WEBSITE_ID",
     IntpcID:    "INTP_CUSTOMER_ID",
     Domain:     "INTP_WEBSITE_DOMAIN",
@@ -295,14 +319,13 @@ err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
 #### Create a website with its own `30 day, unlimited free trial` subscription and attach it to an INTPc. After the 30 day free trial ends, the subscription will be downgraded to the `free` package.
 
 ```go
-err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
+website, err := sdk.CreateWebsite(ctx, twipla3as.CreateWebsiteArgs{
     ExternalID: "INTP_WEBSITE_ID",
     IntpcID:    "INTP_CUSTOMER_ID",
     Domain:     "INTP_WEBSITE_DOMAIN",
     UFT: true,
 })
 ```
-
 
 ### Website API
 
@@ -342,13 +365,13 @@ key, err := sdk.CreateWebsiteApiKey(ctx, twipla3as.CreateApiKeyArgs{
 
 type ApiKey struct {
   Id             string     // Unique ID of the API key
-  Name           string    
+  Name           string
   ApiKey         *string    // The actual API key (only returned once — save it immediately!)
-  Comment        string     
-  CreatedAt      time.Time  
-  ExpiresAt      time.Time  
-  IntpWebsiteId  string     
-  IntpCustomerId string     
+  Comment        string
+  CreatedAt      time.Time
+  ExpiresAt      time.Time
+  IntpWebsiteId  string
+  IntpCustomerId string
 }
 
 ⚠️ Note: apiKey is only returned at creation time. Make sure to store it securely — it cannot be retrieved again.
@@ -364,6 +387,86 @@ keys, err := sdk.ListWebsiteApiKeys(ctx, "INTP_WEBSITE_ID")
 
 ```go
 err := sdk.DeleteWebsiteApiKey(ctx,"INTP_WEBSITE_ID","API_KEY_ID")
+```
+
+### Website Contributors API
+
+Manage contributors for a website and control their level of access.
+
+Any existing customer can be added as a contributor. If the customer doesn't exist yet, create them first before adding them as a contributor — no website is required at creation time.
+
+Once added, the contributor can access the dashboard normally via the dashboard iframe URL, where the website ID is the ID of the website they contribute to.
+
+If the website selector is enabled within the dashboard, the contributor will also see the website listed there, alongside any websites they own.
+
+Each contributor is assigned one of the following roles:
+
+| Role                             | Constant                   | Access                                                                                                                                                                                                           |
+| -------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Editor**                       | `ContributorRoleEditor`    | Full edit access, including content updates and structural changes.                                                                                                                                              |
+| **Watcher**                      | `ContributorRoleWatcher`   | View-only access to website data. Cannot make any edits.                                                                                                                                                         |
+| **Custom Dashboard Contributor** | `ContributorRoleDashboard` | View-only access to custom dashboards explicitly shared with them. No access to any other platform content or settings. Access to specific dashboards is granted by the website owner from within the dashboard. |
+
+---
+
+#### Add a contributor to a website
+
+```go
+err := sdk.AddWebsiteContributor(ctx, twipla3as.CreateWebsiteContributorArgs{
+    ExternalWebsiteId:  "INTP_WEBSITE_ID",
+    ExternalCustomerId: "INTP_CUSTOMER_ID",
+    Role:           twipla3as.ContributorRoleEditor,
+})
+```
+
+| Field                | Type              | Description                                                |
+| -------------------- | ----------------- | ---------------------------------------------------------- |
+| `ExternalWebsiteId`  | `string`          | ID of the website within the integration partner's system. |
+| `ExternalCustomerId` | `string`          | ID of the customer being added as a contributor.           |
+| `Role`               | `ContributorRole` | Role assigned to the contributor. See roles table above.   |
+
+---
+
+#### Delete a contributor from a website
+
+```go
+err := sdk.DeleteWebsiteContributor(ctx, twipla3as.DeleteWebsiteContributorArgs{
+    ExternalWebsiteId:  "INTP_WEBSITE_ID",
+    ExternalCustomerId: "INTP_CUSTOMER_ID",
+})
+```
+
+| Field                | Type     | Description                                                |
+| -------------------- | -------- | ---------------------------------------------------------- |
+| `ExternalWebsiteId`  | `string` | ID of the website within the integration partner's system. |
+| `ExternalCustomerId` | `string` | ID of the customer being removed as a contributor.         |
+
+---
+
+#### List contributors for a website
+
+```go
+contributorsList, err := sdk.ListWebsiteContributors(ctx, twipla3as.ListWebsiteContributorsArgs{
+    ExternalWebsiteId: "INTP_WEBSITE_ID",
+})
+```
+
+| Field               | Type     | Description                                                |
+| ------------------- | -------- | ---------------------------------------------------------- |
+| `ExternalWebsiteId` | `string` | ID of the website within the integration partner's system. |
+
+The response contains the website owner and a map of contributors grouped by role:
+
+```go
+type ListWebsiteContributorsResponse struct {
+    Owner        ContributorInfo                       // The website owner
+    Contributors map[ContributorRole][]ContributorInfo // Contributors grouped by role
+}
+
+type ContributorInfo struct {
+    ExternalCustomerId string
+    Email          string
+}
 ```
 
 ### API for managing a subscription of type `website`
@@ -485,16 +588,15 @@ Once the upgrade button is clicked, the iframe posts a message to the parent fra
 
 ```json5
 {
-    "type": "UPGRADE_BUTTON_CLICKED",
-    "data": {
-        "intpWebsiteId": "", // string; external website id
-        "intpCustomerId": "", // string; customer id
-        "packageName": "", // string; current package name
-        "packageId": "", // string; current package id
-        "inTrial": false, // boolean;
-        "expiresAt": "", // string; expiry date in ISO 8601 format
-        "billingInterval": "monthly" // "monthly"|"yearly";
-    }
+  type: "UPGRADE_BUTTON_CLICKED",
+  data: {
+    intpWebsiteId: "", // string; external website id
+    intpCustomerId: "", // string; customer id
+    packageName: "", // string; current package name
+    packageId: "", // string; current package id
+    inTrial: false, // boolean;
+    expiresAt: "", // string; expiry date in ISO 8601 format
+    billingInterval: "monthly", // "monthly"|"yearly";
+  },
 }
 ```
-

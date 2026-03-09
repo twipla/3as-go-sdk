@@ -5,8 +5,11 @@ package twipla3as_test
 import (
 	"cmp"
 	_ "embed"
+	"fmt"
 	"log"
+	"math/rand/v2"
 	"testing"
+	"time"
 
 	twipla3as "github.com/twipla/3as-go-sdk"
 )
@@ -51,4 +54,31 @@ func TestMain(m *testing.M) {
 	mainSDK = cmp.Or(websiteSubSDK, intpcSubSDK)
 
 	m.Run()
+}
+
+func randIntpcId() string {
+	return fmt.Sprintf("go-sdk-intpc-%d", rand.Int())
+}
+
+func randEmail() string {
+	return fmt.Sprintf("%d@twipla.com", rand.Int())
+}
+
+func randWebsiteId() string {
+	return fmt.Sprintf("go-sdk-website-%d", rand.Int())
+}
+
+func randDomain() string {
+	return fmt.Sprintf("%d.twiplatest.com", rand.Int())
+}
+
+func randINTPC(subscriptionType twipla3as.SubscriptionType) twipla3as.CreateINTPCArgs {
+	return twipla3as.CreateINTPCArgs{
+		ExternalCustomerID: fmt.Sprintf("go-sdk-intpc-%d", rand.Int()),
+		Email:              fmt.Sprintf("%d@twipla.com", rand.Int()),
+		SubscriptionType:   subscriptionType,
+		BillingDate:        time.Now(),
+		ExternalWebsiteID:  fmt.Sprintf("go-sdk-website-%d", rand.Int()),
+		Domain:             fmt.Sprintf("%d.twiplatest.com", rand.Int()),
+	}
 }
