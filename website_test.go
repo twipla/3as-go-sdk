@@ -1,12 +1,14 @@
 package twipla3as_test
 
 import (
+	"context"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	twipla3as "github.com/twipla/3as-go-sdk"
 	"math/rand/v2"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	twipla3as "github.com/twipla/3as-go-sdk"
 )
 
 func TestWebsites(t *testing.T) {
@@ -43,6 +45,10 @@ func TestWebsites(t *testing.T) {
 		Domain:             rndDomain,
 	})
 	assert.NoError(t, err)
+	t.Cleanup(func() {
+		mainSDK.DeleteINTPC(context.Background(), intpc.IntpCustomerID)
+	})
+
 	assert.NotNil(t, intpc)
 	assert.NotEmpty(t, intpc.ID)
 	assert.Equal(t, intpcName, intpc.IntpCustomerID)
@@ -76,8 +82,11 @@ func TestWebsites(t *testing.T) {
 			args.PackageID = pkg.ID
 			args.BillingDate = time.Now()
 		}
-		err := mainSDK.CreateWebsite(t.Context(), args)
+		created, err := mainSDK.CreateWebsite(t.Context(), args)
 		assert.NoError(t, err)
+
+		assert.Equal(t, args.ExternalID, created.ExternalWebsiteID)
+		assert.Equal(t, args.Domain, created.Domain)
 	})
 
 	t.Run("List INTPC websites", func(t *testing.T) {

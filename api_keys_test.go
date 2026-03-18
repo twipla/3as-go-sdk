@@ -1,10 +1,10 @@
 package twipla3as_test
 
 import (
+	"context"
 	"fmt"
 	"math/rand/v2"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,25 +12,18 @@ import (
 )
 
 func TestApiKeys(t *testing.T) {
-	intpcName := fmt.Sprintf("go-sdk-intpc-%d", rand.Int())
-	websiteId := fmt.Sprintf("go-sdk-website-%d", rand.Int())
-	rndEmail := fmt.Sprintf("%d@twipla.com", rand.Int())
-	rndDomain := fmt.Sprintf("%d.twiplatest.com", rand.Int())
-	_, err := mainSDK.CreateINTPC(t.Context(), twipla3as.CreateINTPCArgs{
-		ExternalCustomerID: intpcName,
-		Email:              rndEmail,
-		SubscriptionType:   twipla3as.SubscriptionTypeWebsite,
-		BillingDate:        time.Now(),
-		ExternalWebsiteID:  websiteId,
-		Domain:             rndDomain,
-	})
-	assert.NoError(t, err)
-
 	sdk := websiteSubSDK
+
+	intpc := randINTPC(twipla3as.SubscriptionTypeWebsite)
+	_, err := sdk.CreateINTPC(t.Context(), intpc)
+	assert.NoError(t, err)
+	t.Cleanup(func() {
+		websiteSubSDK.DeleteINTPC(context.Background(), intpc.ExternalCustomerID)
+	})
 
 	t.Run("api key can be created successfully", func(t *testing.T) {
 		args := twipla3as.CreateApiKeyArgs{
-			ExternalWebsiteID: websiteId,
+			ExternalWebsiteID: intpc.ExternalWebsiteID,
 			Name:              fmt.Sprintf("go-sdk-api-key-%d", rand.Int()),
 		}
 		res, err := sdk.CreateWebsiteApiKey(t.Context(), args)
@@ -41,7 +34,7 @@ func TestApiKeys(t *testing.T) {
 		assert.NotEmpty(t, res.Id)
 		assert.NotEmpty(t, res.ExpiresAt)
 		assert.NotEmpty(t, res.CreatedAt)
-		err = sdk.DeleteWebsiteApiKey(t.Context(), websiteId, res.Id)
+		err = sdk.DeleteWebsiteApiKey(t.Context(), intpc.ExternalWebsiteID, res.Id)
 		require.NoError(t, err)
 	})
 
@@ -51,7 +44,7 @@ func TestApiKeys(t *testing.T) {
 
 		for range keysCount {
 			res, err := sdk.CreateWebsiteApiKey(t.Context(), twipla3as.CreateApiKeyArgs{
-				ExternalWebsiteID: websiteId,
+				ExternalWebsiteID: intpc.ExternalWebsiteID,
 				Name:              fmt.Sprintf("go-sdk-api-key-%d", rand.Int()),
 			})
 			assert.NoError(t, err)
@@ -60,12 +53,12 @@ func TestApiKeys(t *testing.T) {
 		}
 		defer func() {
 			for _, id := range createdKeys {
-				err := sdk.DeleteWebsiteApiKey(t.Context(), websiteId, id)
+				err := sdk.DeleteWebsiteApiKey(t.Context(), intpc.ExternalWebsiteID, id)
 				assert.NoError(t, err)
 			}
 		}()
 
-		res, err := sdk.ListWebsiteApiKeys(t.Context(), websiteId)
+		res, err := sdk.ListWebsiteApiKeys(t.Context(), intpc.ExternalWebsiteID)
 		assert.NoError(t, err)
 
 		assert.Equal(t, len(res), keysCount)
@@ -75,7 +68,7 @@ func TestApiKeys(t *testing.T) {
 			assert.NotEmpty(t, item.Id)
 			assert.NotEmpty(t, item.ExpiresAt)
 			assert.NotEmpty(t, item.CreatedAt)
-			assert.Equal(t, websiteId, item.IntpWebsiteId)
+			assert.Equal(t, intpc.ExternalWebsiteID, item.IntpWebsiteId)
 		}
 	})
 

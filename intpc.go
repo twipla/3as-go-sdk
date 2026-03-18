@@ -64,8 +64,19 @@ func (sdk *TwiplaSDK) CreateINTPC(ctx context.Context, args CreateINTPCArgs) (IN
 	var apiArgs createIntpcAPIArgs
 	apiArgs.IntpCustomerID = args.ExternalCustomerID
 	apiArgs.Email = args.Email
+
+	if args.ExternalWebsiteID != "" {
+		apiArgs.Website = &createIntpcAPIWebsiteInfo{
+			IntpWebsiteID: args.ExternalWebsiteID,
+			Domain:        args.Domain,
+		}
+	}
+
 	switch args.SubscriptionType {
 	case SubscriptionTypeWebsite:
+		if apiArgs.Website == nil {
+			break
+		}
 		apiArgs.Website.PackageID = args.PackageID
 		apiArgs.Website.BillingDate = args.BillingDate.UTC().Format(time.RFC3339)
 	case SubscriptionTypeINTPC:
@@ -74,8 +85,7 @@ func (sdk *TwiplaSDK) CreateINTPC(ctx context.Context, args CreateINTPCArgs) (IN
 	default:
 		return INTPC{}, ErrInvalidSubscriptionType
 	}
-	apiArgs.Website.IntpWebsiteID = args.ExternalWebsiteID
-	apiArgs.Website.Domain = args.Domain
+
 	resp, err := parseResponse[INTPC](sdk.apiCall(ctx, http.MethodPost, "/v2/3as/customers", apiArgs))
 	if err != nil {
 		return INTPC{}, err
@@ -111,15 +121,17 @@ func (sdk *TwiplaSDK) DeleteINTPC(ctx context.Context, intpcID string) (INTPC, e
 	return resp.Payload, nil
 }
 
+type createIntpcAPIWebsiteInfo struct {
+	IntpWebsiteID string `json:"intpWebsiteId"`
+	Domain        string `json:"domain"`
+	PackageID     string `json:"packageId,omitempty"`
+	BillingDate   string `json:"billingDate,omitempty"`
+}
+
 type createIntpcAPIArgs struct {
-	IntpCustomerID string `json:"intpCustomerId"`
-	Email          string `json:"email"`
-	PackageID      string `json:"packageId,omitempty"`
-	BillingDate    string `json:"billingDate,omitempty"`
-	Website        struct {
-		IntpWebsiteID string `json:"intpWebsiteId"`
-		Domain        string `json:"domain"`
-		PackageID     string `json:"packageId,omitempty"`
-		BillingDate   string `json:"billingDate,omitempty"`
-	} `json:"website"`
+	IntpCustomerID string                     `json:"intpCustomerId"`
+	Email          string                     `json:"email"`
+	PackageID      string                     `json:"packageId,omitempty"`
+	BillingDate    string                     `json:"billingDate,omitempty"`
+	Website        *createIntpcAPIWebsiteInfo `json:"website,omitempty"`
 }
